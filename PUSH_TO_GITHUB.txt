@@ -1,0 +1,41 @@
+=== วิธี Push โปรเจ็ค Tier Coffee ขึ้น GitHub ===
+
+เนื่องจากเครื่องยังไม่มี Git ติดตั้ง กรุณาทำตามขั้นตอนนี้:
+
+📥 ขั้นตอนที่ 1: ติดตั้ง Git
+-----------------------------------
+1. เปิด PowerShell แบบ Administrator
+2. รันคำสั่ง:
+   winget install --id Git.Git -e --source winget
+
+3. รอให้ติดตั้งเสร็จ แล้วปิด PowerShell
+
+📤 ขั้นตอนที่ 2: Push ขึ้น GitHub
+-----------------------------------
+1. เปิด PowerShell ใหม่ (ไม่ต้อง Admin)
+2. Copy คำสั่งทั้งหมดนี้แล้ว paste ใน PowerShell:
+
+cd "c:\Dev by Tum\Tier Mage\tier-coffee"
+git init
+git add .
+git commit -m "feat: Major updates - POS add-ons, Dashboard filters, and bug fixes"
+git remote add origin https://github.com/korrakottum-code/Tier-Mage.git
+git branch -M main
+git push -u origin main --force
+
+3. ถ้าถามให้ login GitHub ให้ใส่ username/password หรือ token
+
+✅ เสร็จแล้ว!
+Repository: https://github.com/korrakottum-code/Tier-Mage
+
+=== สรุปการแก้ไขที่ทำไปแล้ว ===
+
+✅ ลบข้อมูล seed ของเมนู/วัตถุดิบ - แก้ไข/ลบได้แล้ว
+✅ เพิ่ม POS add-ons dialog พร้อมแก้ไขยอดรวม
+✅ เพิ่ม Dashboard filters (date, category, branch)
+✅ เพิ่ม Stock branch filter
+✅ Analytics แสดง Top 5 เมนูขายดี
+✅ Admin ไม่บังคับใส่ค่าแรง
+✅ แก้ไขปัญหาทั้งหมดที่แจ้งมา
+
+ดูรายละเอียดเพิ่มเติมได้ที่: CHANGELOG.md

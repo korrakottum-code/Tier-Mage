@@ -1,0 +1,568 @@
+// Tier Coffee Management System — Prisma Schema v3.0
+// 28 tables | 8 Modules | 4 Roles
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ═══════════════════════════════════════════
+// CORE: Auth + Multi-branch
+// ═══════════════════════════════════════════
+
+model Branch {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   @default("Branch")
+  address   String?
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  employees      Employee[]
+  orders         Order[]
+  ingredients    Ingredient[]
+  transactions   Transaction[]
+  settlements    Settlement[]
+  shiftClosings  ShiftClosing[]
+  menuOverrides  BranchMenuOverride[]
+  stockCounts    StockCount[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STAFF)
+  employeeId   String?  @unique
+  employee     Employee? @relation(fields: [employeeId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  STAFF
+  VIEWER
+}
+
+// ═══════════════════════════════════════════
+// MODULE: Employees
+// ═══════════════════════════════════════════
+
+model Employee {
+  id         String   @id @default(cuid())
+  branchId   String
+  branch     Branch   @relation(fields: [branchId], references: [id])
+  name       String
+  phone      String?
+  position   String
+  hourlyRate Decimal
+  startDate  DateTime
+  isActive   Boolean  @default(true)
+
+  user             User?
+  schedules        Schedule[]
+  attendances      Attendance[]
+  payrolls         Payroll[]
+  orders           Order[]
+  shiftClosings    ShiftClosing[]
+  slipUploads      SlipUpload[]
+  stockCounts      StockCount[]
+  stockAdjustments StockAdjustment[]
+}
+
+model Schedule {
+  id         String    @id @default(cuid())
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  workDate   DateTime
+  shift      ShiftType
+  isLeave    Boolean   @default(false)
+  leaveType  String?
+}
+
+model Attendance {
+  id            String           @id @default(cuid())
+  employeeId    String
+  employee      Employee         @relation(fields: [employeeId], references: [id])
+  workDate      DateTime
+  clockIn       DateTime?
+  clockOut      DateTime?
+  hoursWorked   Decimal?
+  overtimeHours Decimal          @default(0)
+  status        AttendanceStatus @default(PRESENT)
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  ABSENT
+  LEAVE
+}
+
+enum ShiftType {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+model Payroll {
+  id          String    @id @default(cuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  periodStart DateTime
+  periodEnd   DateTime
+  baseSalary  Decimal
+  overtimePay Decimal   @default(0)
+  bonus       Decimal   @default(0)
+  deductions  Decimal   @default(0)
+  netPay      Decimal
+  paidAt      DateTime?
+}
+
+// ═══════════════════════════════════════════
+// MODULE: Menu + Recipe
+// ═══════════════════════════════════════════
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String
+  sortOrder Int        @default(0)
+  menuItems MenuItem[]
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  name        String
+  price       Decimal
+  imageUrl    String?
+  isAvailable Boolean  @default(true)
+  lastSoldAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  recipes         Recipe[]
+  menuOptions     MenuOption[]
+  orderItems      OrderItem[]
+  branchOverrides BranchMenuOverride[]
+}
+
+model BranchMenuOverride {
+  id         String   @id @default(cuid())
+  branchId   String
+  branch     Branch   @relation(fields: [branchId], references: [id])
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  price      Decimal?
+  isAvailable Boolean @default(true)
+
+  @@unique([branchId, menuItemId])
+}
+
+model Recipe {
+  id           String     @id @default(cuid())
+  menuItemId   String
+  menuItem     MenuItem   @relation(fields: [menuItemId], references: [id])
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  quantity     Decimal
+  unit         String
+}
+
+model MenuOption {
+  id            String   @id @default(cuid())
+  menuItemId    String
+  menuItem      MenuItem @relation(fields: [menuItemId], references: [id])
+  name          String
+  choices       Json
+  priceModifier Json?
+}
+
+// ═══════════════════════════════════════════
+// MODULE: Stock + Smart Count
+// ═══════════════════════════════════════════
+
+model Ingredient {
+  id             String    @id @default(cuid())
+  branchId       String
+  branch         Branch    @relation(fields: [branchId], references: [id])
+  name           String
+  unit           String
+  costPerUnit    Decimal   @default(0)
+  currentQty     Decimal   @default(0)
+  minQty         Decimal   @default(0)
+  minQtyByBranch Json?
+  checkFrequency String    @default("Daily")
+  expiryDate     DateTime?
+  autoThreshold  Decimal   @default(5)
+  warnThreshold  Decimal   @default(20)
+
+  recipes      Recipe[]
+  movements    StockMovement[]
+  stockCounts  StockCount[]
+  adjustments  StockAdjustment[]
+}
+
+model StockMovement {
+  id           String       @id @default(cuid())
+  ingredientId String
+  ingredient   Ingredient   @relation(fields: [ingredientId], references: [id])
+  type         MovementType
+  quantity     Decimal
+  cost         Decimal?
+  note         String?
+  reason       String?
+  fromBranchId String?
+  toBranchId   String?
+  supplierId   String?
+  supplier     Supplier?    @relation(fields: [supplierId], references: [id])
+  performer    String?
+  createdAt    DateTime     @default(now())
+}
+
+enum MovementType {
+  PURCHASE
+  SALE
+  TRANSFER
+  WASTE
+  ADJUSTMENT
+}
+
+model Supplier {
+  id        String          @id @default(cuid())
+  name      String
+  contact   String?
+  phone     String?
+  movements StockMovement[]
+}
+
+model StockCount {
+  id           String      @id @default(cuid())
+  branchId     String
+  branch       Branch      @relation(fields: [branchId], references: [id])
+  ingredientId String
+  ingredient   Ingredient  @relation(fields: [ingredientId], references: [id])
+  countedById  String
+  countedBy    Employee    @relation(fields: [countedById], references: [id])
+  systemQty    Decimal
+  countedQty   Decimal
+  difference   Decimal
+  diffPercent  Decimal
+  tier         CountTier
+  reason       CountReason?
+  reasonNote   String?
+  status       CountStatus @default(PENDING)
+  approvedById String?
+  approvedNote String?
+  createdAt    DateTime    @default(now())
+  resolvedAt   DateTime?
+
+  adjustment StockAdjustment?
+}
+
+enum CountTier {
+  AUTO
+  REASON
+  APPROVAL
+}
+
+enum CountReason {
+  RECIPE_INACCURATE
+  UNRECORDED_WASTE
+  TASTING_FREE
+  PREVIOUS_MISCOUNT
+  UNIT_CONFUSION
+  RECEIVING_ERROR
+  OTHER
+}
+
+enum CountStatus {
+  PENDING
+  AUTO_APPROVED
+  APPROVED
+  REJECTED
+}
+
+model StockAdjustment {
+  id           String     @id @default(cuid())
+  countId      String     @unique
+  count        StockCount @relation(fields: [countId], references: [id])
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  adjustedById String
+  adjustedBy   Employee   @relation(fields: [adjustedById], references: [id])
+  oldQty       Decimal
+  newQty       Decimal
+  difference   Decimal
+  createdAt    DateTime   @default(now())
+}
+
+// ═══════════════════════════════════════════
+// MODULE: POS + Orders
+// ═══════════════════════════════════════════
+
+model Order {
+  id          String      @id @default(cuid())
+  branchId    String
+  branch      Branch      @relation(fields: [branchId], references: [id])
+  employeeId  String
+  employee    Employee    @relation(fields: [employeeId], references: [id])
+  orderNumber String
+  subtotal    Decimal
+  discount    Decimal     @default(0)
+  total       Decimal
+  status      OrderStatus @default(PENDING)
+  source      OrderSource @default(WALK_IN)
+  createdAt   DateTime    @default(now())
+
+  items   OrderItem[]
+  payment Payment?
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  VOIDED
+}
+
+enum OrderSource {
+  WALK_IN
+  GRAB
+  LINE_MAN
+  ROBINHOOD
+  SHOPEE_FOOD
+  OTHER_DELIVERY
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id])
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  quantity   Int
+  unitPrice  Decimal
+  options    Json?
+  lineTotal  Decimal
+}
+
+model Payment {
+  id        String         @id @default(cuid())
+  orderId   String         @unique
+  order     Order          @relation(fields: [orderId], references: [id])
+  channelId String
+  channel   PaymentChannel @relation(fields: [channelId], references: [id])
+  amount    Decimal
+  change    Decimal        @default(0)
+  reference String?
+  createdAt DateTime       @default(now())
+}
+
+// ═══════════════════════════════════════════
+// MODULE: Payment Channels + Reconciliation
+// ═══════════════════════════════════════════
+
+model PaymentChannel {
+  id             String      @id @default(cuid())
+  name           String
+  type           ChannelType
+  gpPercent      Decimal     @default(0)
+  feePercent     Decimal     @default(0)
+  settlementDays Int         @default(0)
+  isActive       Boolean     @default(true)
+
+  fees        ChannelFee[]
+  payments    Payment[]
+  settlements Settlement[]
+}
+
+enum ChannelType {
+  INSTANT
+  DEFERRED
+}
+
+model ChannelFee {
+  id        String         @id @default(cuid())
+  channelId String
+  channel   PaymentChannel @relation(fields: [channelId], references: [id])
+  feeName   String
+  feeType   FeeType
+  amount    Decimal
+}
+
+enum FeeType {
+  PERCENT
+  FIXED
+}
+
+model Settlement {
+  id             String           @id @default(cuid())
+  branchId       String
+  branch         Branch           @relation(fields: [branchId], references: [id])
+  channelId      String
+  channel        PaymentChannel   @relation(fields: [channelId], references: [id])
+  saleDate       DateTime
+  saleAmount     Decimal
+  expectedAmount Decimal
+  actualAmount   Decimal?
+  settledAt      DateTime?
+  status         SettlementStatus @default(PENDING)
+  note           String?
+
+  fees SettlementFee[]
+}
+
+enum SettlementStatus {
+  PENDING
+  SETTLED
+  MATCHED
+  MISMATCHED
+}
+
+model SettlementFee {
+  id           String     @id @default(cuid())
+  settlementId String
+  settlement   Settlement @relation(fields: [settlementId], references: [id])
+  feeName      String
+  amount       Decimal
+}
+
+// ═══════════════════════════════════════════
+// MODULE: Accounting
+// ═══════════════════════════════════════════
+
+model Transaction {
+  id          String           @id @default(cuid())
+  branchId    String
+  branch      Branch           @relation(fields: [branchId], references: [id])
+  type        TransactionType
+  categoryId  String?
+  category    ExpenseCategory? @relation(fields: [categoryId], references: [id])
+  amount      Decimal
+  description String?
+  date        DateTime
+  referenceId String?
+  createdAt   DateTime         @default(now())
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model ExpenseCategory {
+  id           String        @id @default(cuid())
+  name         String
+  budgetLimit  Decimal?
+  transactions Transaction[]
+}
+
+// ═══════════════════════════════════════════
+// MODULE: Shift Closing + Slip Upload
+// ═══════════════════════════════════════════
+
+model ShiftClosing {
+  id                 String        @id @default(cuid())
+  branchId           String
+  branch             Branch        @relation(fields: [branchId], references: [id])
+  employeeId         String
+  employee           Employee      @relation(fields: [employeeId], references: [id])
+  shiftDate          DateTime
+  shift              ShiftType
+  startingCash       Decimal       @default(0)
+  cashExpected       Decimal
+  cashActual         Decimal?
+  cashDifference     Decimal?
+  transferExpected   Decimal
+  transferActual     Decimal?
+  transferDifference Decimal?
+  status             ClosingStatus @default(PENDING)
+  reviewedBy         String?
+  reviewNote         String?
+  closedAt           DateTime      @default(now())
+  reviewedAt         DateTime?
+
+  slips SlipUpload[]
+}
+
+enum ClosingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  AUTO_APPROVED
+}
+
+model SlipUpload {
+  id             String       @id @default(cuid())
+  shiftClosingId String
+  shiftClosing   ShiftClosing @relation(fields: [shiftClosingId], references: [id])
+  channelId      String?
+  fileUrl        String
+  fileName       String
+  fileSize       Int
+  amount         Decimal
+  uploadedById   String
+  uploadedBy     Employee     @relation(fields: [uploadedById], references: [id])
+  uploadedAt     DateTime     @default(now())
+}
+
+// ═══════════════════════════════════════════
+// MODULE: Tickets
+// ═══════════════════════════════════════════
+
+model Ticket {
+  id           String       @id @default(cuid())
+  branchId     String?
+  title        String
+  details      String?
+  type         TicketType   @default(GENERAL)
+  status       TicketStatus @default(OPEN)
+  createdBy    String
+  responder    String?
+  responseNote String?
+  cancelNote   String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime?
+}
+
+enum TicketType {
+  GENERAL
+  RESTOCK
+  URGENT
+  MAINTENANCE
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+// ═══════════════════════════════════════════
+// MODULE: Settings
+// ═══════════════════════════════════════════
+
+model ShopSettings {
+  id            String  @id @default(cuid())
+  shopName      String
+  address       String?
+  phone         String?
+  logoUrl       String?
+  taxId         String?
+  receiptHeader String?
+  receiptFooter String?
+}
+
+model ShiftConfig {
+  id        String @id @default(cuid())
+  name      String
+  startTime String
+  endTime   String
+}
