@@ -11,9 +11,9 @@ export async function GET(req: NextRequest) {
   const categoryId = searchParams.get("categoryId")
   const branchId = searchParams.get("branchId")
 
-  const selectedDate = new Date(dateStr)
-  selectedDate.setHours(0, 0, 0, 0)
-  const nextDay = new Date(selectedDate)
+  // Use Asia/Bangkok timezone (+7) for correct Thai business day
+  const selectedDate = new Date(dateStr + "T00:00:00+07:00")
+  const nextDay = new Date(dateStr + "T00:00:00+07:00")
   nextDay.setDate(nextDay.getDate() + 1)
 
   // Build where clause for orders

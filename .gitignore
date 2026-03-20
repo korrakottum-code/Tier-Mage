@@ -41,3 +41,15 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+# test results & reports
+/test-results/
+/playwright-report/
+
+# temp files
+temp_stock.txt
+*.tmp
+
+# editor
+.idea/
+.vscode/

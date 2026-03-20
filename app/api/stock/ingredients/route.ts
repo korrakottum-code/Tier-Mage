@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { getSessionWithBranchCheck } from "@/lib/api-utils"
 
 export async function GET(req: NextRequest) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const { searchParams } = new URL(req.url)
-  const branchId = searchParams.get("branchId")
+  const result = await getSessionWithBranchCheck(searchParams.get("branchId"))
+  if ("error" in result) return result.error
+  const { effectiveBranchId } = result
+
   const ingredients = await prisma.ingredient.findMany({
-    where: branchId ? { branchId } : undefined,
+    where: effectiveBranchId ? { branchId: effectiveBranchId } : undefined,
     include: { branch: { select: { id: true, name: true } } },
     orderBy: { name: "asc" },
   })

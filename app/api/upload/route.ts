@@ -16,6 +16,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "file, shiftClosingId, and amount required" }, { status: 400 })
   }
 
+  // Validate file size (max 5MB)
+  const MAX_FILE_SIZE = 5 * 1024 * 1024
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json({ error: "ไฟล์ใหญ่เกินไป (สูงสุด 5MB)" }, { status: 400 })
+  }
+
+  // Validate file type (images only)
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return NextResponse.json({ error: "รองรับเฉพาะไฟล์รูปภาพ (JPEG, PNG, WebP)" }, { status: 400 })
+  }
+
   const employee = await prisma.employee.findFirst({
     where: { user: { id: session.user?.id } },
   })

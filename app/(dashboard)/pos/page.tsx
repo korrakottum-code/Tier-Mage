@@ -31,6 +31,15 @@ export default async function PosPage() {
   ])
 
   // Convert Decimal to number for client components
+  const serializedMenuItems = menuItems.map((item) => ({
+    ...item,
+    price: Number(item.price),
+    menuOptions: item.menuOptions?.map((opt) => ({
+      ...opt,
+      priceModifier: Array.isArray(opt.priceModifier) ? opt.priceModifier.map(Number) : opt.priceModifier,
+    })),
+  }))
+
   const serializedChannels = paymentChannels.map((ch) => ({
     ...ch,
     gpPercent: Number(ch.gpPercent),
@@ -39,7 +48,7 @@ export default async function PosPage() {
 
   return (
     <PosClient
-      menuItems={menuItems}
+      menuItems={serializedMenuItems}
       categories={categories}
       paymentChannels={serializedChannels}
       branches={branches}

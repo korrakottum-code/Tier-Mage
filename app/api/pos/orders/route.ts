@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { getSessionWithBranchCheck } from "@/lib/api-utils"
 
 export async function GET(req: NextRequest) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const { searchParams } = new URL(req.url)
-  const branchId = searchParams.get("branchId")
+  const result = await getSessionWithBranchCheck(searchParams.get("branchId"))
+  if ("error" in result) return result.error
+  const branchId = result.effectiveBranchId
   const date = searchParams.get("date")
 
-  const startOfDay = date ? new Date(date) : new Date()
-  startOfDay.setHours(0, 0, 0, 0)
-  const endOfDay = new Date(startOfDay)
-  endOfDay.setHours(23, 59, 59, 999)
+  // Use Asia/Bangkok timezone (+7) for correct Thai business day
+  const dateStr = date || new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" })
+  const startOfDay = new Date(dateStr + "T00:00:00+07:00")
+  const endOfDay = new Date(dateStr + "T23:59:59.999+07:00")
 
   const orders = await prisma.order.findMany({
     where: {
@@ -41,10 +42,13 @@ export async function POST(req: NextRequest) {
   })
   if (!employee) return NextResponse.json({ error: "Employee not found" }, { status: 404 })
 
+  const todayStr = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" })
+  const todayStart = new Date(todayStr + "T00:00:00+07:00")
   const orderCount = await prisma.order.count({
-    where: { branchId: body.branchId, createdAt: { gte: new Date(new Date().setHours(0,0,0,0)) } },
+    where: { branchId: body.branchId, createdAt: { gte: todayStart } },
   })
-  const orderNumber = `ORD-${new Date().toLocaleDateString("th-TH", { year: "2-digit", month: "2-digit", day: "2-digit" }).replace(/\//g, "")}-${String(orderCount + 1).padStart(4, "0")}`
+  const datePart = todayStr.replace(/-/g, "").slice(2)
+  const orderNumber = `ORD-${datePart}-${String(orderCount + 1).padStart(4, "0")}`
 
   const subtotal = body.items.reduce(
     (s: number, i: { unitPrice: number; quantity: number; options?: { name: string; choice: string; priceModifier: number }[] | null }) => {
