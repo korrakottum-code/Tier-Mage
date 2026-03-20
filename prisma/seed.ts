@@ -316,6 +316,8 @@ async function main() {
 
   void cashChannel
   void transferChannel
+  void catCoffee
+  void catTea
   void catSmoothie
   void catFood
 }

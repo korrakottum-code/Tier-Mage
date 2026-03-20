@@ -69,6 +69,14 @@ export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const id = searchParams.get("id")
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
-  await prisma.ingredient.delete({ where: { id } })
-  return NextResponse.json({ ok: true })
+  try {
+    // Delete related records first
+    await prisma.recipe.deleteMany({ where: { ingredientId: id } })
+    await prisma.stockMovement.deleteMany({ where: { ingredientId: id } })
+    await prisma.stockCount.deleteMany({ where: { ingredientId: id } })
+    await prisma.ingredient.delete({ where: { id } })
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    return NextResponse.json({ error: "ไม่สามารถลบวัตถุดิบนี้ได้ อาจมีข้อมูลอ้างอิงอยู่" }, { status: 400 })
+  }
 }

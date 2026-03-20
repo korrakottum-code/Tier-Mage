@@ -62,6 +62,20 @@ export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const id = searchParams.get("id")
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
-  await prisma.menuItem.delete({ where: { id } })
-  return NextResponse.json({ ok: true })
+  try {
+    // Delete related records first
+    await prisma.recipe.deleteMany({ where: { menuItemId: id } })
+    await prisma.menuOption.deleteMany({ where: { menuItemId: id } })
+    await prisma.branchMenuOverride.deleteMany({ where: { menuItemId: id } })
+    await prisma.menuItem.delete({ where: { id } })
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    // If still fails (e.g. has order items), soft-disable instead
+    try {
+      await prisma.menuItem.update({ where: { id }, data: { isAvailable: false } })
+      return NextResponse.json({ ok: true, softDeleted: true, message: "เมนูนี้มีออเดอร์อ้างอิง จึงปิดการขายแทนการลบ" })
+    } catch {
+      return NextResponse.json({ error: "ไม่สามารถลบเมนูนี้ได้" }, { status: 400 })
+    }
+  }
 }

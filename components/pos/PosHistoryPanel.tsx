@@ -51,9 +51,9 @@ export function PosHistoryPanel({ branches, role }: { branches: Branch[]; role?:
   useEffect(() => { load(branchId) }, [branchId])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const total = orders.reduce((s, o: any) => s + Number(o.total), 0)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const completed = orders.filter((o: any) => o.status === "COMPLETED").length
+  const completedOrders = orders.filter((o: any) => o.status === "COMPLETED")
+  const total = completedOrders.reduce((s, o: any) => s + Number(o.total), 0)
+  const completed = completedOrders.length
 
   return (
     <div className="flex flex-col h-full overflow-hidden p-4 space-y-4">

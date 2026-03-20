@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
     }),
     prisma.settlement.count({ where: { status: "PENDING" } }),
     prisma.ingredient.findMany({
+      where: branchId ? { branchId } : undefined,
       select: { id: true, name: true, currentQty: true, minQty: true, unit: true },
     }),
     prisma.order.findMany({

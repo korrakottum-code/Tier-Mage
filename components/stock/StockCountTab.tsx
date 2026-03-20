@@ -233,13 +233,11 @@ export function StockCountTab({ ingredients, branches, role, onUpdateIngredient 
           </div>
           
           <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-            <DialogTrigger asChild>
-              <button
-                disabled={itemsToSubmit.length === 0}
-                className="h-11 px-6 rounded-xl bg-primary text-primary-foreground font-bold disabled:opacity-50 flex items-center gap-2 shadow-sm hover:shadow active:scale-95 transition-all"
-              >
-                <Save className="w-5 h-5" /> ยืนยันการนับ
-              </button>
+            <DialogTrigger
+              disabled={itemsToSubmit.length === 0}
+              className="h-11 px-6 rounded-xl bg-primary text-primary-foreground font-bold disabled:opacity-50 flex items-center gap-2 shadow-sm hover:shadow active:scale-95 transition-all"
+            >
+              <Save className="w-5 h-5" /> ยืนยันการนับ
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>

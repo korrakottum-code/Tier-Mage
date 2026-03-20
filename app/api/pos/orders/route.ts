@@ -47,7 +47,10 @@ export async function POST(req: NextRequest) {
   const orderNumber = `ORD-${new Date().toLocaleDateString("th-TH", { year: "2-digit", month: "2-digit", day: "2-digit" }).replace(/\//g, "")}-${String(orderCount + 1).padStart(4, "0")}`
 
   const subtotal = body.items.reduce(
-    (s: number, i: { unitPrice: number; quantity: number }) => s + i.unitPrice * i.quantity, 0
+    (s: number, i: { unitPrice: number; quantity: number; options?: { name: string; choice: string; priceModifier: number }[] | null }) => {
+      const optionsPrice = (i.options || []).reduce((sum: number, opt: { priceModifier: number }) => sum + (opt.priceModifier || 0), 0)
+      return s + (i.unitPrice + optionsPrice) * i.quantity
+    }, 0
   )
   const discount = body.discount ?? 0
   const total = subtotal - discount
@@ -68,7 +71,7 @@ export async function POST(req: NextRequest) {
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           options: item.options ?? null,
-          lineTotal: item.unitPrice * item.quantity,
+          lineTotal: (item.unitPrice + ((item.options as { priceModifier?: number }[] || []).reduce((s: number, o: { priceModifier?: number }) => s + (o.priceModifier || 0), 0))) * item.quantity,
         })),
       },
       payment: {
