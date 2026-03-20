@@ -21,6 +21,7 @@ model Branch {
   phone     String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   employees      Employee[]
   orders         Order[]
@@ -54,15 +55,17 @@ enum Role {
 // ═══════════════════════════════════════════
 
 model Employee {
-  id         String   @id @default(cuid())
-  branchId   String
-  branch     Branch   @relation(fields: [branchId], references: [id])
-  name       String
-  phone      String?
+  id        String   @id @default(cuid())
+  branchId  String
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  name      String
+  phone     String?
   position   String
   hourlyRate Decimal
   startDate  DateTime
   isActive   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user             User?
   schedules        Schedule[]
@@ -145,6 +148,7 @@ model MenuItem {
   isAvailable Boolean  @default(true)
   lastSoldAt  DateTime?
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   recipes         Recipe[]
   menuOptions     MenuOption[]
@@ -201,6 +205,7 @@ model Ingredient {
   expiryDate     DateTime?
   autoThreshold  Decimal   @default(5)
   warnThreshold  Decimal   @default(20)
+  updatedAt      DateTime  @updatedAt
 
   recipes      Recipe[]
   movements    StockMovement[]
@@ -319,9 +324,12 @@ model Order {
   status      OrderStatus @default(PENDING)
   source      OrderSource @default(WALK_IN)
   createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   items   OrderItem[]
   payment Payment?
+
+  @@unique([branchId, orderNumber])
 }
 
 enum OrderStatus {

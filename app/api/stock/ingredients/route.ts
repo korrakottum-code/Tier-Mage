@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { getSessionWithBranchCheck } from "@/lib/api-utils"
+import { createIngredientSchema, updateIngredientSchema } from "@/lib/validations"
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -22,18 +23,23 @@ export async function POST(req: NextRequest) {
   if (!session || !["ADMIN", "MANAGER"].includes(session.user?.role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
-  const body = await req.json()
+  const rawBody = await req.json()
+  const parsed = createIngredientSchema.safeParse(rawBody)
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid input", details: parsed.error.flatten().fieldErrors }, { status: 400 })
+  }
+  const body = parsed.data
   const ingredient = await prisma.ingredient.create({
     data: {
       name: body.name,
       branchId: body.branchId,
       unit: body.unit,
-      costPerUnit: body.costPerUnit ?? 0,
-      currentQty: body.currentQty ?? 0,
-      minQty: body.minQty ?? 0,
-      checkFrequency: body.checkFrequency ?? "Daily",
-      autoThreshold: body.autoThreshold ?? 5,
-      warnThreshold: body.warnThreshold ?? 20,
+      costPerUnit: body.costPerUnit,
+      currentQty: body.currentQty,
+      minQty: body.minQty,
+      checkFrequency: body.checkFrequency,
+      autoThreshold: body.autoThreshold,
+      warnThreshold: body.warnThreshold,
     },
     include: { branch: { select: { id: true, name: true } } },
   })
@@ -45,18 +51,22 @@ export async function PUT(req: NextRequest) {
   if (!session || !["ADMIN", "MANAGER"].includes(session.user?.role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
-  const body = await req.json()
+  const rawBody = await req.json()
+  const parsed = updateIngredientSchema.safeParse(rawBody)
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid input", details: parsed.error.flatten().fieldErrors }, { status: 400 })
+  }
+  const body = parsed.data
   const ingredient = await prisma.ingredient.update({
     where: { id: body.id },
     data: {
       name: body.name,
-      branchId: body.branchId,
       unit: body.unit,
       costPerUnit: body.costPerUnit,
       minQty: body.minQty,
       checkFrequency: body.checkFrequency,
-      autoThreshold: body.autoThreshold ?? undefined,
-      warnThreshold: body.warnThreshold ?? undefined,
+      autoThreshold: body.autoThreshold,
+      warnThreshold: body.warnThreshold,
     },
     include: { branch: { select: { id: true, name: true } } },
   })

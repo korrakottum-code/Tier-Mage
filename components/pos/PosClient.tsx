@@ -5,16 +5,14 @@ import { ShoppingCart, History } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PosOrderPanel } from "@/components/pos/PosOrderPanel"
 import { PosHistoryPanel } from "@/components/pos/PosHistoryPanel"
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyRecord = any
+import type { MenuItemType, CategoryType, PaymentChannelType, BranchType, Role } from "@/types"
 
 interface PosClientProps {
-  menuItems: AnyRecord[]
-  categories: AnyRecord[]
-  paymentChannels: AnyRecord[]
-  branches: { id: string; name: string }[]
-  role?: string
+  menuItems: MenuItemType[]
+  categories: CategoryType[]
+  paymentChannels: PaymentChannelType[]
+  branches: BranchType[]
+  role?: Role | string
 }
 
 export function PosClient({ menuItems, categories, paymentChannels, branches, role }: PosClientProps) {

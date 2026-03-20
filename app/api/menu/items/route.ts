@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { createMenuItemSchema, updateMenuItemSchema } from "@/lib/validations"
 
 export async function GET() {
   const session = await auth()
@@ -20,13 +21,18 @@ export async function POST(req: NextRequest) {
   if (!session || !["ADMIN", "MANAGER"].includes(session.user?.role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
-  const body = await req.json()
+  const rawBody = await req.json()
+  const parsed = createMenuItemSchema.safeParse(rawBody)
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid input", details: parsed.error.flatten().fieldErrors }, { status: 400 })
+  }
+  const body = parsed.data
   const item = await prisma.menuItem.create({
     data: {
       name: body.name,
       categoryId: body.categoryId,
       price: body.price,
-      isAvailable: body.isAvailable ?? true,
+      isAvailable: body.isAvailable,
       imageUrl: body.imageUrl ?? null,
     },
     include: { category: { select: { id: true, name: true } }, recipes: true },
@@ -39,7 +45,12 @@ export async function PUT(req: NextRequest) {
   if (!session || !["ADMIN", "MANAGER"].includes(session.user?.role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
-  const body = await req.json()
+  const rawBody = await req.json()
+  const parsed = updateMenuItemSchema.safeParse(rawBody)
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid input", details: parsed.error.flatten().fieldErrors }, { status: 400 })
+  }
+  const body = parsed.data
   const item = await prisma.menuItem.update({
     where: { id: body.id },
     data: {

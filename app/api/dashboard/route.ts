@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { getSessionWithBranchCheck } from "@/lib/api-utils"
 
 export async function GET(req: NextRequest) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
   const { searchParams } = new URL(req.url)
-  const dateStr = searchParams.get("date") || new Date().toISOString().slice(0, 10)
+  const result = await getSessionWithBranchCheck(searchParams.get("branchId"))
+  if ("error" in result) return result.error
+
+  const dateStr = searchParams.get("date") || new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" })
   const categoryId = searchParams.get("categoryId")
-  const branchId = searchParams.get("branchId")
+  const branchId = result.effectiveBranchId
 
   // Use Asia/Bangkok timezone (+7) for correct Thai business day
   const selectedDate = new Date(dateStr + "T00:00:00+07:00")
@@ -45,10 +45,13 @@ export async function GET(req: NextRequest) {
       _count: { _all: true },
     }),
     prisma.settlement.count({ where: { status: "PENDING" } }),
-    prisma.ingredient.findMany({
-      where: branchId ? { branchId } : undefined,
-      select: { id: true, name: true, currentQty: true, minQty: true, unit: true },
-    }),
+    branchId
+      ? prisma.$queryRaw<{ id: string; name: string; currentQty: number; minQty: number; unit: string }[]>`
+          SELECT id, name, "currentQty", "minQty", unit FROM "Ingredient"
+          WHERE "branchId" = ${branchId} AND "currentQty" <= "minQty"`
+      : prisma.$queryRaw<{ id: string; name: string; currentQty: number; minQty: number; unit: string }[]>`
+          SELECT id, name, "currentQty", "minQty", unit FROM "Ingredient"
+          WHERE "currentQty" <= "minQty"`,
     prisma.order.findMany({
       where: orderWhere,
       include: {
@@ -63,12 +66,9 @@ export async function GET(req: NextRequest) {
     prisma.shiftClosing.count({ where: { status: "PENDING" } }),
   ])
 
-  const lowStockCount = lowStockItems.filter(
-    (i) => Number(i.currentQty) <= Number(i.minQty)
-  ).length
-  const lowStockList = lowStockItems
-    .filter((i) => Number(i.currentQty) <= Number(i.minQty))
-    .slice(0, 5)
+  // lowStockItems already filtered at DB level (currentQty <= minQty)
+  const lowStockCount = lowStockItems.length
+  const lowStockList = lowStockItems.slice(0, 5)
 
   const salesTotal = Number(ordersData._sum.total ?? 0)
   const ordersCount = ordersData._count._all ?? 0

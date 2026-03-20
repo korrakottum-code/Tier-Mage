@@ -12,10 +12,11 @@ export async function GET(req: NextRequest) {
   const action = searchParams.get("action")
 
   if (action === "backup") {
+    // Master data
     const [
       branches, users, employees, categories, menuItems, recipes, menuOptions,
       ingredients, suppliers, paymentChannels, channelFees, expenseCategories,
-      shopSettings, shiftConfigs, tickets,
+      shopSettings, shiftConfigs, branchMenuOverrides,
     ] = await Promise.all([
       prisma.branch.findMany(),
       prisma.user.findMany({ select: { id: true, email: true, role: true, employeeId: true, createdAt: true } }),
@@ -31,16 +32,43 @@ export async function GET(req: NextRequest) {
       prisma.expenseCategory.findMany(),
       prisma.shopSettings.findMany(),
       prisma.shiftConfig.findMany(),
+      prisma.branchMenuOverride.findMany(),
+    ])
+
+    // Transactional data
+    const [
+      orders, orderItems, payments, settlements, stockMovements,
+      stockCounts, stockAdjustments, shiftClosings, slipUploads,
+      transactions, tickets, attendance, schedules, payrolls,
+    ] = await Promise.all([
+      prisma.order.findMany(),
+      prisma.orderItem.findMany(),
+      prisma.payment.findMany(),
+      prisma.settlement.findMany(),
+      prisma.stockMovement.findMany(),
+      prisma.stockCount.findMany(),
+      prisma.stockAdjustment.findMany(),
+      prisma.shiftClosing.findMany(),
+      prisma.slipUpload.findMany({ select: { id: true, shiftClosingId: true, channelId: true, fileName: true, fileSize: true, amount: true, uploadedById: true, uploadedAt: true } }),
+      prisma.transaction.findMany(),
       prisma.ticket.findMany(),
+      prisma.attendance.findMany(),
+      prisma.schedule.findMany(),
+      prisma.payroll.findMany(),
     ])
 
     const backup = {
-      version: "3.0",
+      version: "3.1",
       exportedAt: new Date().toISOString(),
       data: {
+        // Master
         branches, users, employees, categories, menuItems, recipes, menuOptions,
         ingredients, suppliers, paymentChannels, channelFees, expenseCategories,
-        shopSettings, shiftConfigs, tickets,
+        shopSettings, shiftConfigs, branchMenuOverrides,
+        // Transactions
+        orders, orderItems, payments, settlements, stockMovements,
+        stockCounts, stockAdjustments, shiftClosings, slipUploads,
+        transactions, tickets, attendance, schedules, payrolls,
       },
     }
 

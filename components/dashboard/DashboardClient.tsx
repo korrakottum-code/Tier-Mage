@@ -10,37 +10,33 @@ import { format } from "date-fns"
 import { th } from "date-fns/locale"
 
 interface DashboardClientProps {
-  initialDate: string
-  initialStats: {
-    salesTotal: number
-    ordersCount: number
-    pendingSettlements: number
-    lowStockCount: number
-    openTickets: number
-    pendingCounts: number
-    pendingShiftClosings: number
-  }
-  initialOrders: any[]
-  initialLowStock: any[]
   categories: { id: string; name: string }[]
   branches: { id: string; name: string }[]
 }
 
+const emptyStats = {
+  salesTotal: 0,
+  ordersCount: 0,
+  pendingSettlements: 0,
+  lowStockCount: 0,
+  openTickets: 0,
+  pendingCounts: 0,
+  pendingShiftClosings: 0,
+}
+
 export function DashboardClient({ 
-  initialDate, 
-  initialStats, 
-  initialOrders, 
-  initialLowStock,
   categories,
   branches
 }: DashboardClientProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date(initialDate))
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
-  const [stats, setStats] = useState(initialStats)
-  const [orders, setOrders] = useState(initialOrders)
-  const [lowStock, setLowStock] = useState(initialLowStock)
-  const [loading, setLoading] = useState(false)
+  const [stats, setStats] = useState(emptyStats)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [orders, setOrders] = useState<any[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [lowStock, setLowStock] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadData()
