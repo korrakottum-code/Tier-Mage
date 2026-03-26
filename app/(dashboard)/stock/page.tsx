@@ -13,6 +13,7 @@ export default async function StockPage() {
   const [ingredients, branches] = await Promise.all([
     prisma.ingredient.findMany({
       where: {
+        branch: { isActive: true },
         ...(userRole === "STAFF" || userRole === "VIEWER" ? { branchId: userBranchId ?? undefined } : {}),
       },
       include: { branch: { select: { id: true, name: true } } },
@@ -27,6 +28,15 @@ export default async function StockPage() {
     }),
   ])
 
+  const serializedIngredients = ingredients.map((i) => ({
+    ...i,
+    costPerUnit: Number(i.costPerUnit),
+    currentQty: Number(i.currentQty),
+    minQty: Number(i.minQty),
+    autoThreshold: Number(i.autoThreshold),
+    warnThreshold: Number(i.warnThreshold),
+  }))
+
   return (
     <div className="space-y-6">
       <div>
@@ -34,7 +44,7 @@ export default async function StockPage() {
         <p className="text-muted-foreground text-sm mt-1">จัดการวัตถุดิบ รับเข้า โอน และนับสต็อก</p>
       </div>
       <StockClient
-        initialIngredients={ingredients}
+        initialIngredients={serializedIngredients}
         branches={branches}
         role={session.user?.role ?? "STAFF"}
       />

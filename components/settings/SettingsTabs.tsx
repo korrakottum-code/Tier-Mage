@@ -74,7 +74,7 @@ export function SettingsTabs({
         {active === "shop" && <ShopTab data={shopSettings} />}
         {active === "branches" && <BranchesTab data={branches} />}
         {active === "payment" && <PaymentChannelsTab data={paymentChannels} />}
-        {active === "shifts" && <ShiftsTab data={shiftConfigs} />}
+        {active === "shifts" && <ShiftsTab data={shiftConfigs} branches={branches} />}
         {active === "users" && <UsersTab data={users} />}
         {active === "suppliers" && <SuppliersTab />}
         {active === "system" && <SystemTab />}

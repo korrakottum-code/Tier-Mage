@@ -182,10 +182,10 @@ export function PosOrderPanel({ menuItems, categories, paymentChannels, branches
       {/* Left: Menu */}
       <div className={cn("flex-1 flex flex-col overflow-hidden border-r border-border transition-all", showMobileCart ? "hidden md:flex" : "flex")}>
         {/* Category filter */}
-        <div className="flex items-center gap-1.5 px-3 py-2 overflow-x-auto shrink-0 border-b border-border">
+        <div className="flex items-center gap-2 px-4 py-3 bg-background/80 backdrop-blur-2xl overflow-x-auto shrink-0 border-b border-border/50 custom-scrollbar z-10 relative shadow-sm">
           <button
             onClick={() => setActiveCat(null)}
-            className={cn("shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors", activeCat === null ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}
+            className={cn("shrink-0 px-4 py-1.5 rounded-xl text-sm font-bold transition-all duration-300", activeCat === null ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" : "bg-accent/50 text-muted-foreground hover:text-foreground hover:bg-accent/80")}
           >
             ทั้งหมด
           </button>
@@ -193,7 +193,7 @@ export function PosOrderPanel({ menuItems, categories, paymentChannels, branches
             <button
               key={cat.id}
               onClick={() => setActiveCat(cat.id)}
-              className={cn("shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors", activeCat === cat.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}
+              className={cn("shrink-0 px-4 py-1.5 rounded-xl text-sm font-bold transition-all duration-300", activeCat === cat.id ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" : "bg-accent/50 text-muted-foreground hover:text-foreground hover:bg-accent/80")}
             >
               {cat.name}
             </button>
@@ -211,24 +211,25 @@ export function PosOrderPanel({ menuItems, categories, paymentChannels, branches
                   key={item.id}
                   onClick={() => handleItemClick(item)}
                   className={cn(
-                    "relative rounded-xl border p-3 text-left transition-all hover:border-primary/50 hover:bg-primary/5 active:scale-95",
-                    inCart ? "border-primary/40 bg-primary/5" : "border-border bg-card"
+                    "relative rounded-2xl border p-3.5 text-left transition-all duration-300 hover:-translate-y-1 active:scale-95 group overflow-hidden",
+                    inCart ? "border-primary bg-primary/5 shadow-md shadow-primary/10 ring-1 ring-primary/20" : "border-border/50 bg-card/60 backdrop-blur-md shadow-sm hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
                   )}
                 >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                   {inCart && (
-                    <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
+                    <span className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold shadow-sm z-10 animate-in zoom-in">
                       {totalQty}
                     </span>
                   )}
                   {item.imageUrl ? (
-                    <div className="w-full aspect-square rounded-lg bg-muted mb-2 overflow-hidden">
-                      <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                    <div className="w-full aspect-square rounded-xl bg-muted mb-3 overflow-hidden shadow-inner relative">
+                      <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain bg-white/5 transition-transform duration-500 group-hover:scale-110" />
                     </div>
                   ) : (
-                    <div className="w-full aspect-square rounded-lg bg-muted flex items-center justify-center text-3xl mb-2">☕</div>
+                    <div className="w-full aspect-square rounded-xl bg-gradient-to-br from-accent to-muted flex items-center justify-center text-4xl mb-3 shadow-inner transform transition-transform duration-500 group-hover:scale-110">☕</div>
                   )}
-                  <p className="text-xs font-medium leading-tight line-clamp-2">{item.name}</p>
-                  <p className="text-sm font-bold text-primary mt-1">{formatCurrency(Number(item.price))}</p>
+                  <p className="text-sm font-bold leading-tight line-clamp-2 text-foreground group-hover:text-primary transition-colors">{item.name}</p>
+                  <p className="text-sm font-black text-primary mt-1.5">{formatCurrency(Number(item.price))}</p>
                 </button>
               )
             })}
@@ -254,9 +255,9 @@ export function PosOrderPanel({ menuItems, categories, paymentChannels, branches
       )}
 
       {/* Right: Cart */}
-      <div className={cn("w-full md:w-72 xl:w-80 flex-col shrink-0 bg-card", showMobileCart ? "flex" : "hidden md:flex")}>
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <div className={cn("w-full md:w-[340px] xl:w-[380px] flex-col shrink-0 bg-card/80 backdrop-blur-3xl border-l border-white/5 shadow-[-10px_0_40px_rgba(0,0,0,0.03)] z-10", showMobileCart ? "flex" : "hidden md:flex")}>
+        <div className="px-5 py-4 border-b border-border/50 flex items-center justify-between bg-background/50">
+          <div className="flex items-center gap-2.5">
             <button onClick={() => setShowMobileCart(false)} className="md:hidden p-1 -ml-1 rounded text-muted-foreground hover:bg-muted">
               <X className="w-5 h-5" />
             </button>

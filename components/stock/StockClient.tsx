@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Package, Plus, AlertTriangle, ArrowDownToLine, ArrowLeftRight, Trash2, ClipboardList } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils"
+import { useBranchStore } from "@/stores/branch-store"
 import { IngredientsTab } from "@/components/stock/IngredientsTab"
 import { MovementsTab } from "@/components/stock/MovementsTab"
 import { StockCountTab } from "@/components/stock/StockCountTab"
@@ -26,10 +27,12 @@ interface StockClientProps {
 }
 
 export function StockClient({ initialIngredients, branches, role }: StockClientProps) {
+  const { currentBranchId } = useBranchStore()
   const [active, setActive] = useState<TabId>("ingredients")
   const [ingredients, setIngredients] = useState<Ingredient[]>(initialIngredients)
 
-  const lowStock = ingredients.filter((i) => Number(i.currentQty) <= Number(i.minQty))
+  const filteredIngredients = ingredients.filter((i) => !currentBranchId || i.branchId === currentBranchId)
+  const lowStock = filteredIngredients.filter((i) => Number(i.currentQty) <= Number(i.minQty))
 
   return (
     <div className="space-y-4">
@@ -47,7 +50,7 @@ export function StockClient({ initialIngredients, branches, role }: StockClientP
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-border bg-card p-3 text-center">
-          <p className="text-2xl font-bold">{ingredients.length}</p>
+          <p className="text-2xl font-bold">{filteredIngredients.length}</p>
           <p className="text-xs text-muted-foreground mt-0.5">รายการทั้งหมด</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-3 text-center">
@@ -56,7 +59,7 @@ export function StockClient({ initialIngredients, branches, role }: StockClientP
         </div>
         <div className="rounded-xl border border-border bg-card p-3 text-center">
           <p className="text-2xl font-bold text-emerald-400">
-            {formatCurrency(ingredients.reduce((s, i) => s + Number(i.currentQty) * Number(i.costPerUnit), 0))}
+            {formatCurrency(filteredIngredients.reduce((s, i) => s + Number(i.currentQty) * Number(i.costPerUnit), 0))}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">มูลค่ารวม</p>
         </div>
@@ -86,7 +89,7 @@ export function StockClient({ initialIngredients, branches, role }: StockClientP
 
       {active === "ingredients" && (
         <IngredientsTab
-          ingredients={ingredients}
+          ingredients={filteredIngredients}
           branches={branches}
           role={role}
           onAdd={(i) => setIngredients((p) => [...p, i])}
@@ -95,10 +98,10 @@ export function StockClient({ initialIngredients, branches, role }: StockClientP
         />
       )}
       {active === "movements" && (
-        <MovementsTab ingredients={ingredients} branches={branches} role={role} />
+        <MovementsTab ingredients={ingredients} branches={branches} role={role} currentBranchId={currentBranchId} />
       )}
       {active === "count" && (
-        <StockCountTab ingredients={ingredients} branches={branches} role={role} onUpdateIngredient={(i) => setIngredients((p) => p.map((x) => x.id === i.id ? i : x))} />
+        <StockCountTab ingredients={filteredIngredients} branches={branches} role={role} onUpdateIngredient={(i) => setIngredients((p) => p.map((x) => x.id === i.id ? i : x))} />
       )}
     </div>
   )

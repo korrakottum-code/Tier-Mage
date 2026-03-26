@@ -9,7 +9,7 @@ export default async function DashboardPage() {
 
   // Only fetch filter options here; stats come from /api/dashboard (single source of truth)
   const [categories, branches] = await Promise.all([
-    prisma.category.findMany({ select: { id: true, name: true }, orderBy: { sortOrder: "asc" } }),
+    prisma.category.findMany({ where: { isArchived: false }, select: { id: true, name: true }, orderBy: { sortOrder: "asc" } }),
     prisma.branch.findMany({
       where: {
         isActive: true,

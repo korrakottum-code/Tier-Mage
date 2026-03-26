@@ -26,13 +26,11 @@ export function IngredientsTab({ ingredients, branches, role, onAdd, onUpdate, o
   const [form, setForm] = useState({ ...emptyForm, branchId: branches[0]?.id ?? "" })
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState("")
-  const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
 
   const canEdit = ["ADMIN", "MANAGER"].includes(role)
   const filtered = ingredients.filter((i) => {
     const matchSearch = i.name.toLowerCase().includes(search.toLowerCase())
-    const matchBranch = !selectedBranch || i.branchId === selectedBranch
-    return matchSearch && matchBranch
+    return matchSearch
   })
 
   function openEdit(i: Ingredient) {
@@ -75,16 +73,6 @@ export function IngredientsTab({ ingredients, branches, role, onAdd, onUpdate, o
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        {branches.length > 1 && (
-          <select
-            value={selectedBranch || ""}
-            onChange={(e) => setSelectedBranch(e.target.value || null)}
-            className="h-8 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-ring"
-          >
-            <option value="">ทุกสาขา</option>
-            {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
-        )}
         <input
           value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder="ค้นหาวัตถุดิบ..."

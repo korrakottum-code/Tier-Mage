@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
   const start = new Date(weekStart)
   start.setHours(0, 0, 0, 0)
   const end = new Date(start)
-  end.setDate(end.getDate() + 7)
+  const days = parseInt(searchParams.get("days") || "7")
+  end.setDate(end.getDate() + days)
 
   const where: Record<string, unknown> = {
     workDate: { gte: start, lt: end },

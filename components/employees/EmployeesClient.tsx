@@ -27,6 +27,8 @@ const tabs = [
 ] as const
 
 export function EmployeesClient({ initialEmployees, branches, role }: EmployeesClientProps) {
+  const isStaff = role === "STAFF"
+  const visibleTabs = isStaff ? tabs.filter(t => t.id !== "payroll") : tabs
   const [activeTab, setActiveTab] = useState<string>("employees")
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees)
   const [showForm, setShowForm] = useState(false)
@@ -80,23 +82,24 @@ export function EmployeesClient({ initialEmployees, branches, role }: EmployeesC
     const res = await fetch(`/api/employees?id=${id}`, { method: "DELETE" })
     if (res.ok) setEmployees((p) => p.filter((e) => e.id !== id))
   }
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 relative">
+      <div className="absolute top-[-20%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-border -mx-1 overflow-x-auto">
-        {tabs.map((tab) => {
+      <div className="flex items-center gap-2 border-b border-border/50 pb-2 overflow-x-auto custom-scrollbar">
+        {visibleTabs.map((tab) => {
           const Icon = tab.icon
+          const isActive = activeTab === tab.id
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap",
-                activeTab === tab.id ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+                "flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 pointer-events-auto whitespace-nowrap border border-transparent",
+                isActive ? "bg-card/80 backdrop-blur-md text-primary shadow-[0_4px_16px_rgba(0,0,0,0.03)] border-border/40" : "text-muted-foreground hover:bg-accent/40 hover:text-foreground hover:border-border/30"
               )}
             >
-              <Icon className="w-4 h-4" /> {tab.label}
+              <Icon className={cn("w-4 h-4 transition-transform", isActive ? "scale-110" : "")} /> {tab.label}
             </button>
           )
         })}
@@ -107,99 +110,123 @@ export function EmployeesClient({ initialEmployees, branches, role }: EmployeesC
       {activeTab === "payroll" && <PayrollTab branches={branches} role={role} />}
 
       {activeTab === "employees" && <>
-      <div className="flex items-center gap-3">
-        <input
-          value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="ค้นหาพนักงาน..."
-          className="flex-1 h-8 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-ring"
-        />
+      <div className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="relative flex-1 w-full">
+          <input
+            value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="ค้นหาพนักงาน..."
+            className="h-11 w-full rounded-2xl border border-white/10 bg-card/60 backdrop-blur-xl px-4 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-shadow shadow-sm placeholder:text-muted-foreground/50"
+          />
+        </div>
         {canEdit && (
           <button
             onClick={() => { setShowForm(true); setEditing(null); setForm({ ...emptyForm, branchId: branches[0]?.id ?? "" }) }}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"
+            className="flex items-center justify-center gap-2 h-11 px-5 rounded-2xl bg-primary text-primary-foreground text-sm font-bold shadow-[0_4px_14px_0_rgba(217,119,6,0.2)] hover:shadow-[0_6px_20px_rgba(217,119,6,0.3)] hover:-translate-y-0.5 transition-all w-full sm:w-auto overflow-hidden group relative"
           >
-            <Plus className="w-4 h-4" /> เพิ่มพนักงาน
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+            <Plus className="w-4 h-4 shrink-0 transition-transform group-hover:rotate-180" /> <span className="relative z-10">เพิ่มพนักงาน</span>
           </button>
         )}
       </div>
 
       {showForm && canEdit && (
-        <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <div className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur-xl p-5 space-y-4 shadow-[0_8px_32px_rgba(0,0,0,0.04)] animate-in slide-in-from-top-4 fade-in duration-300">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium text-sm">{editing ? "แก้ไขพนักงาน" : "เพิ่มพนักงานใหม่"}</h3>
-            <button onClick={() => { setShowForm(false); setEditing(null) }} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+            <h3 className="font-bold text-base text-foreground flex items-center gap-2">
+              <User className="w-4 h-4 text-primary" />
+              {editing ? "แก้ไขพนักงาน" : "เพิ่มพนักงานใหม่"}
+            </h3>
+            <button onClick={() => { setShowForm(false); setEditing(null) }} className="p-1 rounded-full bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"><X className="w-4 h-4" /></button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1 col-span-2">
-              <label className="text-xs text-muted-foreground">ชื่อ-นามสกุล *</label>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="สมชาย ใจดี" className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus:border-ring" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5 col-span-2">
+              <label className="text-xs font-semibold text-muted-foreground ml-1">ชื่อ-นามสกุล *</label>
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="สมชาย ใจดี" className="h-10 w-full rounded-xl border border-white/5 bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow" />
             </div>
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">สาขา *</label>
-              <select value={form.branchId} onChange={(e) => setForm({ ...form, branchId: e.target.value })} className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground ml-1">สาขา *</label>
+              <select value={form.branchId} onChange={(e) => setForm({ ...form, branchId: e.target.value })} className="h-10 w-full rounded-xl border border-white/5 bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow">
                 {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
             </div>
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">ตำแหน่ง *</label>
-              <input value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} placeholder="บาริสต้า" className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus:border-ring" />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground ml-1">ตำแหน่ง *</label>
+              <input value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} placeholder="บาริสต้า" className="h-10 w-full rounded-xl border border-white/5 bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow" />
             </div>
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">เบอร์โทร</label>
-              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="08x-xxx-xxxx" className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus:border-ring" />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground ml-1">เบอร์โทร</label>
+              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="08x-xxx-xxxx" className="h-10 w-full rounded-xl border border-white/5 bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow" />
             </div>
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">ค่าแรง/ชั่วโมง (บาท) <span className="text-muted-foreground/60">(ไม่บังคับสำหรับ Admin)</span></label>
-              <input type="number" min="0" step="0.5" value={form.hourlyRate} onChange={(e) => setForm({ ...form, hourlyRate: e.target.value })} placeholder="0" className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus:border-ring" />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground ml-1">ค่าแรง/ชั่วโมง (บาท) <span className="opacity-60 font-normal">(ไม่บังคับ Admin)</span></label>
+              <input type="number" min="0" step="0.5" value={form.hourlyRate} onChange={(e) => setForm({ ...form, hourlyRate: e.target.value })} placeholder="0" className="h-10 w-full rounded-xl border border-white/5 bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow" />
             </div>
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">วันเริ่มงาน</label>
-              <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none" />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground ml-1">วันเริ่มงาน</label>
+              <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className="h-10 w-full rounded-xl border border-white/5 bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow" />
             </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={handleSave} disabled={saving || !form.name || !form.branchId || !form.position} className="h-8 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
-              {saving ? "บันทึก..." : "บันทึก"}
+          <div className="flex gap-3 pt-2">
+            <button onClick={handleSave} disabled={saving || !form.name || !form.branchId || !form.position} className="h-10 px-6 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 disabled:opacity-50 transition-all hover:-translate-y-px">
+              {saving ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
             </button>
-            <button onClick={() => { setShowForm(false); setEditing(null) }} className="h-8 px-3 rounded-lg border border-border text-sm text-muted-foreground">ยกเลิก</button>
+            <button onClick={() => { setShowForm(false); setEditing(null) }} className="h-10 px-4 rounded-xl border border-border bg-accent/50 text-sm font-medium hover:bg-accent transition-colors">ยกเลิก</button>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
         {filtered.map((emp) => (
-          <div key={emp.id} className="rounded-xl border border-border bg-card p-4 flex gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <div key={emp.id} className="group relative rounded-2xl border border-border/50 bg-card/60 backdrop-blur-xl p-5 flex gap-4 shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.05)] transition-all duration-300">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform duration-300">
               <User className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="font-medium text-sm">{emp.name}</p>
-                  <p className="text-xs text-muted-foreground">{emp.position} · {emp.branch?.name}</p>
+                  <p className="font-bold text-foreground text-base tracking-tight">{emp.name}</p>
+                  <p className="text-xs font-medium text-primary mt-0.5 bg-primary/10 px-2 py-0.5 rounded-md inline-block">{emp.position}</p>
                 </div>
                 {canEdit && (
-                  <div className="flex gap-1 shrink-0">
-                    <button onClick={() => openEdit(emp)} className="p-1 rounded text-muted-foreground hover:text-foreground"><Pencil className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => handleDelete(emp.id)} className="p-1 rounded text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <div className="flex gap-1.5 shrink-0 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openEdit(emp)} className="p-1.5 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => handleDelete(emp.id)} className="p-1.5 rounded-lg bg-destructive/10 text-destructive/70 hover:bg-destructive/20 hover:text-destructive transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 )}
               </div>
-              <div className="mt-2 flex gap-3 text-xs text-muted-foreground">
-                {emp.phone && <span>📞 {emp.phone}</span>}
-                <span>💰 {formatCurrency(Number(emp.hourlyRate))}/ชม.</span>
+              
+              <div className="mt-4 pt-3 border-t border-border/40 grid grid-cols-2 gap-2 text-xs font-medium text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-primary/70">📍</span>
+                  <span className="truncate">{emp.branch?.name}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-primary/70">💰</span>
+                  <span>{formatCurrency(Number(emp.hourlyRate))}/ชม.</span>
+                </div>
+                {emp.phone && (
+                  <div className="flex items-center gap-1.5 col-span-2">
+                    <span className="text-primary/70">📞</span>
+                    <span>{emp.phone}</span>
+                  </div>
+                )}
+                {emp.user && (
+                  <div className="flex items-center gap-1.5 col-span-2 w-full">
+                    <span className="text-primary/70">🔑</span>
+                    <span className="truncate">{emp.user.email}</span>
+                  </div>
+                )}
               </div>
-              {emp.user && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  🔑 {emp.user.email}
-                  <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-muted text-[10px]">{emp.user.role}</span>
-                </p>
-              )}
             </div>
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="col-span-full text-center py-10 text-muted-foreground text-sm">ไม่พบพนักงาน</div>
+          <div className="col-span-full flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+             <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center shadow-inner">
+               <Users className="w-8 h-8 opacity-40" />
+             </div>
+             <p className="text-sm font-semibold mt-2">ไม่พบพนักงาน</p>
+          </div>
         )}
       </div>
       </>}

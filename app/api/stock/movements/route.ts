@@ -7,10 +7,17 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const { searchParams } = new URL(req.url)
   const ingredientId = searchParams.get("ingredientId")
+  const branchId = searchParams.get("branchId")
+  
   const movements = await prisma.stockMovement.findMany({
-    where: ingredientId ? { ingredientId } : undefined,
+    where: {
+      AND: [
+        ingredientId ? { ingredientId } : {},
+        branchId ? { ingredient: { branchId } } : {},
+      ]
+    },
     include: {
-      ingredient: { select: { id: true, name: true, unit: true } },
+      ingredient: { select: { id: true, name: true, unit: true, branchId: true } },
       supplier: { select: { id: true, name: true } },
     },
     orderBy: { createdAt: "desc" },

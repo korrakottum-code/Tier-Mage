@@ -45,14 +45,20 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", req.url))
   }
 
-  if (pathname.startsWith("/employees") && role === "STAFF") {
+  if (
+    pathname.startsWith("/employees") &&
+    role !== "ADMIN" &&
+    role !== "MANAGER" &&
+    role !== "STAFF"
+  ) {
     return NextResponse.redirect(new URL("/dashboard", req.url))
   }
 
   if (
     pathname.startsWith("/shift-closing") &&
     role !== "ADMIN" &&
-    role !== "MANAGER"
+    role !== "MANAGER" &&
+    role !== "STAFF"
   ) {
     return NextResponse.redirect(new URL("/dashboard", req.url))
   }

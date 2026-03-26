@@ -45,9 +45,19 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
 
-  const employee = await prisma.employee.findFirst({
-    where: { user: { id: session.user?.id } },
-  })
+  let employeeId = session.user.employeeId ?? body.employeeId
+  
+  if (!employeeId) {
+    const freshUser = await prisma.user.findUnique({
+      where: { id: session.user?.id },
+      select: { employeeId: true }
+    })
+    employeeId = freshUser?.employeeId
+  }
+
+  if (!employeeId) {
+    return NextResponse.json({ error: "ไม่มีสิทธิ์ปิดกะ (ไม่พบรหัสพนักงาน)" }, { status: 400 })
+  }
 
   const startingCash = Number(body.startingCash ?? 0)
   const cashExpected = Number(body.cashExpected ?? 0)
@@ -67,7 +77,7 @@ export async function POST(req: NextRequest) {
   const closing = await prisma.shiftClosing.create({
     data: {
       branchId: body.branchId,
-      employeeId: employee?.id ?? body.employeeId,
+      employeeId,
       shiftDate: new Date(body.shiftDate),
       shift: body.shift,
       startingCash,

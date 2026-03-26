@@ -7,9 +7,11 @@ export async function GET() {
   const session = await auth()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const items = await prisma.menuItem.findMany({
+    where: { isArchived: false },
     include: {
       category: { select: { id: true, name: true } },
       recipes: { include: { ingredient: { select: { id: true, name: true, unit: true } } } },
+      menuOptions: true,
     },
     orderBy: [{ categoryId: "asc" }, { name: "asc" }],
   })
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
       isAvailable: body.isAvailable,
       imageUrl: body.imageUrl ?? null,
     },
-    include: { category: { select: { id: true, name: true } }, recipes: true },
+    include: { category: { select: { id: true, name: true } }, recipes: true, menuOptions: true },
   })
   return NextResponse.json(item)
 }
@@ -60,7 +62,7 @@ export async function PUT(req: NextRequest) {
       isAvailable: body.isAvailable,
       imageUrl: body.imageUrl ?? null,
     },
-    include: { category: { select: { id: true, name: true } }, recipes: true },
+    include: { category: { select: { id: true, name: true } }, recipes: true, menuOptions: true },
   })
   return NextResponse.json(item)
 }
@@ -81,12 +83,12 @@ export async function DELETE(req: NextRequest) {
     await prisma.menuItem.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch (error) {
-    // If still fails (e.g. has order items), soft-disable instead
+    // If still fails (e.g. has order items), soft-delete instead
     try {
-      await prisma.menuItem.update({ where: { id }, data: { isAvailable: false } })
-      return NextResponse.json({ ok: true, softDeleted: true, message: "เมนูนี้มีออเดอร์อ้างอิง จึงปิดการขายแทนการลบ" })
+      await prisma.menuItem.update({ where: { id }, data: { isArchived: true } })
+      return NextResponse.json({ ok: true, softDeleted: true, message: "เมนูนี้มีออเดอร์อ้างอิง จึงทำการซ่อนแทนการลบ" })
     } catch {
-      return NextResponse.json({ error: "ไม่สามารถลบเมนูนี้ได้" }, { status: 400 })
+      return NextResponse.json({ error: "ไม่สามารถลบแบบซ่อนเมนูได้" }, { status: 400 })
     }
   }
 }

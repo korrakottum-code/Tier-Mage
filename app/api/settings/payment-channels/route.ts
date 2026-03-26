@@ -41,6 +41,12 @@ export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const id = searchParams.get("id")
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
-  await prisma.paymentChannel.update({ where: { id }, data: { isActive: false } })
-  return NextResponse.json({ ok: true })
+  try {
+    await prisma.paymentChannel.delete({ where: { id } })
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    // If has dependencies, soft delete instead
+    await prisma.paymentChannel.update({ where: { id }, data: { isActive: false } })
+    return NextResponse.json({ ok: true, softDeleted: true })
+  }
 }

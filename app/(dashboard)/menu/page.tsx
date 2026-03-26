@@ -9,8 +9,9 @@ export default async function MenuPage() {
   if (!session) redirect("/login")
 
   const [categories, menuItems, ingredients, branches] = await Promise.all([
-    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.category.findMany({ where: { isArchived: false }, orderBy: { sortOrder: "asc" } }),
     prisma.menuItem.findMany({
+      where: { isArchived: false },
       include: {
         category: { select: { id: true, name: true } },
         recipes: {

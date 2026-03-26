@@ -12,14 +12,14 @@ export default async function PosPage() {
 
   const [menuItems, categories, paymentChannels, branches] = await Promise.all([
     prisma.menuItem.findMany({
-      where: { isAvailable: true },
+      where: { isAvailable: true, isArchived: false },
       include: { 
         category: { select: { id: true, name: true } },
         menuOptions: true
       },
       orderBy: [{ categoryId: "asc" }, { name: "asc" }],
     }),
-    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.category.findMany({ where: { isArchived: false }, orderBy: { sortOrder: "asc" } }),
     prisma.paymentChannel.findMany({ where: { isActive: true } }),
     prisma.branch.findMany({
       where: {

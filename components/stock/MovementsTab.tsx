@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus, X } from "lucide-react"
 import Select from "react-select"
 import { formatCurrency } from "@/lib/utils"
@@ -20,9 +20,10 @@ interface MovementsTabProps {
   ingredients: Ingredient[]
   branches: Branch[]
   role: string
+  currentBranchId: string | null
 }
 
-export function MovementsTab({ ingredients, branches, role }: MovementsTabProps) {
+export function MovementsTab({ ingredients, branches, role, currentBranchId }: MovementsTabProps) {
   const [showForm, setShowForm] = useState(false)
   const [movements, setMovements] = useState<Record<string, unknown>[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -38,13 +39,15 @@ export function MovementsTab({ ingredients, branches, role }: MovementsTabProps)
   const [saving, setSaving] = useState(false)
 
   async function loadMovements() {
-    const res = await fetch("/api/stock/movements")
+    const params = new URLSearchParams()
+    if (currentBranchId) params.append("branchId", currentBranchId)
+    const res = await fetch(`/api/stock/movements?${params.toString()}`)
     if (res.ok) { setMovements(await res.json()); setLoaded(true) }
   }
 
-  if (!loaded) {
+  useEffect(() => {
     loadMovements()
-  }
+  }, [currentBranchId])
 
   async function handleSave() {
     if (!form.ingredientId || !form.quantity) return

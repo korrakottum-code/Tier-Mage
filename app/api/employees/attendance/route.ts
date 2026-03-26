@@ -62,14 +62,7 @@ export async function POST(req: NextRequest) {
       where: { employeeId, workDate: { gte: today, lt: tomorrow } },
     })
 
-    let status: "PRESENT" | "LATE" = "PRESENT"
-    if (schedule) {
-      const shiftStart: Record<string, number> = { MORNING: 8, AFTERNOON: 14, EVENING: 20 }
-      const expectedHour = shiftStart[schedule.shift] ?? 8
-      if (now.getHours() > expectedHour || (now.getHours() === expectedHour && now.getMinutes() > 15)) {
-        status = "LATE"
-      }
-    }
+    const status = "PRESENT"
 
     const record = await prisma.attendance.create({
       data: {
@@ -106,6 +99,25 @@ export async function POST(req: NextRequest) {
       include: { employee: { select: { id: true, name: true, position: true } } },
     })
     return NextResponse.json(updated)
+  }
+
+  if (action === "markLeave") {
+    const existing = await prisma.attendance.findFirst({
+      where: { employeeId, workDate: { gte: today, lt: tomorrow } },
+    })
+    if (existing) {
+      return NextResponse.json({ error: "มีประวัติการลงเวลาในวันนี้แล้ว" }, { status: 409 })
+    }
+
+    const record = await prisma.attendance.create({
+      data: {
+        employeeId,
+        workDate: today,
+        status: "LEAVE",
+      },
+      include: { employee: { select: { id: true, name: true, position: true } } },
+    })
+    return NextResponse.json(record)
   }
 
   // Manual create (ADMIN/MANAGER)

@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { TrendingUp, ShoppingBag, CreditCard, BarChart3, AlertTriangle, GitCompare } from "lucide-react"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts"
 import { formatCurrency } from "@/lib/utils"
+import { useBranchStore } from "@/stores/branch-store"
 
 interface Branch { id: string; name: string }
 interface AnalyticsData {
@@ -44,7 +46,8 @@ const reasonLabel: Record<string, string> = {
 }
 
 export function AnalyticsClient({ branches }: { branches: Branch[] }) {
-  const [branchId, setBranchId] = useState("ALL")
+  const { currentBranchId } = useBranchStore()
+  const [branchId, setBranchId] = useState(currentBranchId || "ALL")
   const [period, setPeriod] = useState("7d")
   const [data, setData] = useState<AnalyticsData>(emptyData)
   const [loading, setLoading] = useState(true)
@@ -77,6 +80,14 @@ export function AnalyticsClient({ branches }: { branches: Branch[] }) {
     setBranchSales(sales.sort((a, b) => b.revenue - a.revenue))
     setLoading(false)
   }
+
+  useEffect(() => {
+    if (currentBranchId && branchId !== currentBranchId) {
+      setBranchId(currentBranchId)
+    } else if (!currentBranchId && branchId !== "ALL") {
+      setBranchId("ALL")
+    }
+  }, [currentBranchId])
 
   useEffect(() => { loadData() }, [branchId, period])
 
@@ -126,27 +137,34 @@ export function AnalyticsClient({ branches }: { branches: Branch[] }) {
         })}
       </div>
 
-      {/* Revenue by day bar chart */}
-      {revenueByDay.length > 1 && (
-        <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-          <h3 className="font-semibold text-sm">ยอดขายรายวัน</h3>
-          <div className="flex items-end gap-1 h-28">
-            {revenueByDay.map((d) => {
-              const pct = (d.amount / maxDayRevenue) * 100
-              const label = new Date(d.date).toLocaleDateString("th-TH", { day: "2-digit", month: "short" })
-              return (
-                <div key={d.date} className="flex-1 flex flex-col items-center gap-1 min-w-0 group relative">
-                  <div className="w-full rounded-t bg-primary/60 hover:bg-primary/80 transition-colors" style={{ height: `${Math.max(pct, 2)}%` }} />
-                  <span className="text-[9px] text-muted-foreground leading-none truncate w-full text-center">{label}</span>
-                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block bg-popover border border-border rounded px-1.5 py-1 text-xs whitespace-nowrap z-10">
-                    {formatCurrency(d.amount)}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+      {/* Revenue by day chart */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-4">
+        <h3 className="font-semibold text-sm">ยอดขายรายวัน</h3>
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={revenueByDay}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis 
+                dataKey="date" 
+                tick={{ fontSize: 10 }} 
+                tickFormatter={(str) => new Date(str).toLocaleDateString("th-TH", { day: "2-digit", month: "short" })}
+                stroke="hsl(var(--muted-foreground))"
+              />
+              <YAxis 
+                tick={{ fontSize: 10 }}
+                tickFormatter={(val) => val >= 1000 ? `${(val/1000).toFixed(0)}k` : val}
+                stroke="hsl(var(--muted-foreground))"
+              />
+              <Tooltip 
+                contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                formatter={(val: any) => [formatCurrency(Number(val) || 0), "ยอดขาย"]}
+                labelFormatter={(label) => new Date(label).toLocaleDateString("th-TH", { dateStyle: "medium" })}
+              />
+              <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-      )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top menu items */}

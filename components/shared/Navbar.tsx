@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -37,11 +38,11 @@ export function Navbar({ userName, role, onMenuClick }: NavbarProps) {
   }
 
   return (
-    <header className="h-14 border-b border-border flex items-center px-4 gap-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
+    <header className="h-16 border-b border-border/40 flex items-center px-6 gap-4 bg-background/70 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/40 sticky top-0 z-40 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
       {/* Mobile menu button */}
       <button
         onClick={onMenuClick}
-        className="md:hidden text-muted-foreground hover:text-foreground"
+        className="md:hidden text-muted-foreground hover:text-foreground transition-colors p-2 -ml-2 rounded-lg hover:bg-accent/50"
       >
         <Menu className="w-5 h-5" />
       </button>
@@ -54,33 +55,37 @@ export function Navbar({ userName, role, onMenuClick }: NavbarProps) {
       <div className="flex-1" />
 
       {/* Alerts bell */}
-      <Button variant="ghost" size="icon" className="text-muted-foreground">
-        <Bell className="w-4 h-4" />
+      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-xl">
+        <Bell className="w-5 h-5" />
       </Button>
 
       {/* User menu */}
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center gap-2 h-8 px-2 rounded-md hover:bg-accent transition-colors outline-none">
-          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-            <User className="w-3.5 h-3.5 text-primary" />
+        <DropdownMenuTrigger className="flex items-center gap-3 h-10 px-2 sm:px-3 rounded-xl hover:bg-accent/40 transition-all outline-none border border-transparent hover:border-border/50">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/20 flex items-center justify-center shadow-inner">
+            <User className="w-4 h-4 text-primary" />
           </div>
-          <span className="hidden sm:block text-sm font-medium max-w-32 truncate">
-            {userName}
-          </span>
-          <span className="hidden sm:block text-xs text-muted-foreground">
-            {roleLabel[role]}
-          </span>
+          <div className="hidden sm:flex flex-col items-start pr-1">
+            <span className="text-sm font-bold text-foreground max-w-32 truncate leading-none">
+              {userName}
+            </span>
+            <span className="text-[11px] font-medium text-primary mt-1 leading-none uppercase tracking-wider">
+              {roleLabel[role]}
+            </span>
+          </div>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium">{userName}</p>
-              <p className="text-xs text-muted-foreground">{roleLabel[role]}</p>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
+        <DropdownMenuContent align="end" className="w-56 rounded-xl border border-border/50 shadow-xl bg-background/95 backdrop-blur-xl">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="font-normal py-3 px-3">
+              <div className="flex flex-col space-y-1.5">
+                <p className="text-sm font-semibold text-foreground">{userName}</p>
+                <p className="text-xs font-medium text-primary uppercase tracking-wider">{roleLabel[role]}</p>
+              </div>
+            </DropdownMenuLabel>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator className="bg-border/50" />
           <DropdownMenuItem
-            className="text-destructive focus:text-destructive cursor-pointer"
+            className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer rounded-lg mx-1 my-1 py-2.5 font-medium"
             onClick={handleSignOut}
           >
             <LogOut className="w-4 h-4 mr-2" />

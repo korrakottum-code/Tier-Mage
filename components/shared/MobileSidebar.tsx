@@ -9,13 +9,13 @@ import type { Role } from "@/types"
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["ADMIN", "MANAGER", "VIEWER"] as Role[] },
   { href: "/pos", label: "POS ขายสินค้า", icon: ShoppingCart, roles: ["ADMIN", "MANAGER", "STAFF"] as Role[] },
-  { href: "/menu", label: "เมนู / สูตร", icon: UtensilsCrossed, roles: ["ADMIN", "MANAGER", "STAFF", "VIEWER"] as Role[] },
-  { href: "/stock", label: "สต็อกวัตถุดิบ", icon: Package, roles: ["ADMIN", "MANAGER", "STAFF", "VIEWER"] as Role[] },
+  { href: "/menu", label: "เมนู / สูตร", icon: UtensilsCrossed, roles: ["ADMIN", "MANAGER", "STAFF"] as Role[] },
+  { href: "/stock", label: "สต็อกวัตถุดิบ", icon: Package, roles: ["ADMIN", "MANAGER", "STAFF"] as Role[] },
   { href: "/accounting", label: "บัญชี", icon: Calculator, roles: ["ADMIN", "MANAGER", "VIEWER"] as Role[] },
-  { href: "/shift-closing", label: "ปิดกะ", icon: AlarmClock, roles: ["ADMIN", "MANAGER", "STAFF"] as Role[] },
+  { href: "/shift-closing?refresh=1", label: "ปิดกะ", icon: AlarmClock, roles: ["ADMIN", "MANAGER", "STAFF"] as Role[] },
   { href: "/settlements", label: "กระทบยอด", icon: ArrowLeftRight, roles: ["ADMIN", "MANAGER"] as Role[] },
-  { href: "/employees", label: "พนักงาน", icon: Users, roles: ["ADMIN", "MANAGER", "STAFF"] as Role[] },
-  { href: "/tickets", label: "คำร้อง", icon: TicketCheck, roles: ["ADMIN", "MANAGER", "STAFF", "VIEWER"] as Role[] },
+  { href: "/employees?refresh=1", label: "พนักงาน", icon: Users, roles: ["ADMIN", "MANAGER", "STAFF"] as Role[] },
+  { href: "/tickets", label: "คำร้อง", icon: TicketCheck, roles: ["ADMIN", "MANAGER", "STAFF"] as Role[] },
   { href: "/history", label: "ประวัติ", icon: History, roles: ["ADMIN", "MANAGER", "STAFF", "VIEWER"] as Role[] },
   { href: "/analytics", label: "วิเคราะห์", icon: BarChart3, roles: ["ADMIN", "MANAGER", "VIEWER"] as Role[] },
   { href: "/settings", label: "ตั้งค่า", icon: Settings, roles: ["ADMIN"] as Role[] },
@@ -32,8 +32,9 @@ export function MobileSidebar({ role, open, onClose }: MobileSidebarProps) {
   const visible = navItems.filter((item) => item.roles.includes(role))
 
   function isActive(href: string) {
-    if (href === "/") return pathname === "/"
-    return pathname.startsWith(href)
+    const baseHref = href.split("?")[0]
+    if (baseHref === "/") return pathname === "/"
+    return pathname.startsWith(baseHref)
   }
 
   return (

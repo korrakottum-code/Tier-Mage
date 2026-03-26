@@ -73,6 +73,27 @@ export function BranchSwitcher({ role }: BranchSwitcherProps) {
 
       {open && (
         <div className="absolute top-full left-0 mt-1 w-52 bg-popover border border-border rounded-lg shadow-lg py-1 z-50">
+          <button
+            onClick={() => { setCurrentBranch(null); setOpen(false) }}
+            className={cn(
+              "w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors text-left",
+              !currentBranch && "text-primary"
+            )}
+          >
+            <Check
+              className={cn(
+                "w-4 h-4 shrink-0",
+                !currentBranch ? "opacity-100" : "opacity-0"
+              )}
+            />
+            <div className="min-w-0">
+              <p className="font-medium truncate">ทุกสาขา</p>
+              <p className="text-xs text-muted-foreground">ภาพรวมทั้งหมด</p>
+            </div>
+          </button>
+          
+          <div className="h-px bg-border my-1" />
+
           {branches.map((branch) => (
             <button
               key={branch.id}

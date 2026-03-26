@@ -11,7 +11,7 @@ interface BranchStore {
   currentBranchId: string | null
   currentBranch: Branch | null
   branches: Branch[]
-  setCurrentBranch: (branch: Branch) => void
+  setCurrentBranch: (branch: Branch | null) => void
   setBranches: (branches: Branch[]) => void
   clearBranch: () => void
 }
@@ -23,7 +23,7 @@ export const useBranchStore = create<BranchStore>()(
       currentBranch: null,
       branches: [],
       setCurrentBranch: (branch) =>
-        set({ currentBranchId: branch.id, currentBranch: branch }),
+        set({ currentBranchId: branch?.id ?? null, currentBranch: branch }),
       setBranches: (branches) => set({ branches }),
       clearBranch: () =>
         set({ currentBranchId: null, currentBranch: null }),

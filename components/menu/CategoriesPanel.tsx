@@ -38,9 +38,14 @@ export function CategoriesPanel({ categories, onAdd, onUpdate, onDelete }: Categ
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("ลบหมวดหมู่นี้? เมนูในหมวดนี้จะถูกลบด้วย")) return
+    if (!confirm("ยืนยันการลบหมวดหมู่นี้?")) return
     const res = await fetch(`/api/menu/categories?id=${id}`, { method: "DELETE" })
-    if (res.ok) onDelete(id)
+    if (res.ok) {
+      onDelete(id)
+    } else {
+      const data = await res.json()
+      alert(data.error || "ไม่สามารถลบหมวดหมู่นี้ได้")
+    }
   }
 
   function startEdit(cat: Category) {

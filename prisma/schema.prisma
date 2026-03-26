@@ -31,6 +31,7 @@ model Branch {
   shiftClosings  ShiftClosing[]
   menuOverrides  BranchMenuOverride[]
   stockCounts    StockCount[]
+  shiftConfigs   ShiftConfig[]
 }
 
 model User {
@@ -135,6 +136,7 @@ model Category {
   id        String     @id @default(cuid())
   name      String
   sortOrder Int        @default(0)
+  isArchived Boolean   @default(false)
   menuItems MenuItem[]
 }
 
@@ -146,6 +148,7 @@ model MenuItem {
   price       Decimal
   imageUrl    String?
   isAvailable Boolean  @default(true)
+  isArchived  Boolean  @default(false)
   lastSoldAt  DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -569,7 +572,9 @@ model ShopSettings {
 }
 
 model ShiftConfig {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
+  branchId  String?
+  branch    Branch? @relation(fields: [branchId], references: [id])
   name      String
   startTime String
   endTime   String

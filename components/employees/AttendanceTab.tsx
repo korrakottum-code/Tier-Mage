@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Clock, LogIn, LogOut } from "lucide-react"
+import { Clock, LogIn, LogOut, FileHeart } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 
 interface Branch { id: string; name: string }
@@ -53,7 +53,9 @@ export function AttendanceTab({ employees, branches, role, currentUserId }: {
 
   useEffect(() => { load() }, [branchId, month])
 
-  async function clockAction(employeeId: string, action: "clockIn" | "clockOut") {
+  async function clockAction(employeeId: string, action: "clockIn" | "clockOut" | "markLeave") {
+    if (action === "markLeave" && !confirm("ยืนยันการบันทึกวันลาสำหรับพนักงานคนนี้?")) return
+    
     setActing(employeeId)
     const res = await fetch("/api/employees/attendance", {
       method: "POST",
@@ -104,16 +106,23 @@ export function AttendanceTab({ employees, branches, role, currentUserId }: {
                   <p className="text-xs font-medium truncate">{emp.name}</p>
                   {hasClockedIn && <p className="text-[10px] text-muted-foreground">เข้า {new Date(todayRecord!.clockIn!).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}</p>}
                 </div>
-                {!hasClockedIn ? (
-                  <button onClick={() => clockAction(emp.id, "clockIn")} disabled={acting === emp.id} className="h-6 px-2 rounded bg-emerald-500/10 text-emerald-400 text-[10px] flex items-center gap-1 hover:bg-emerald-500/20 disabled:opacity-50">
-                    <LogIn className="w-3 h-3" /> เข้า
-                  </button>
-                ) : !hasClockedOut ? (
-                  <button onClick={() => clockAction(emp.id, "clockOut")} disabled={acting === emp.id} className="h-6 px-2 rounded bg-orange-500/10 text-orange-400 text-[10px] flex items-center gap-1 hover:bg-orange-500/20 disabled:opacity-50">
-                    <LogOut className="w-3 h-3" /> ออก
+                {!hasClockedIn && todayRecord?.status !== "LEAVE" && todayRecord?.status !== "ABSENT" ? (
+                  <div className="flex gap-1">
+                    <button onClick={() => clockAction(emp.id, "clockIn")} disabled={acting === emp.id} className="h-7 px-2.5 rounded-lg bg-emerald-500/10 text-emerald-500 font-bold text-xs flex items-center gap-1.5 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors shadow-sm">
+                      <LogIn className="w-3.5 h-3.5" /> เข้างาน
+                    </button>
+                    <button onClick={() => clockAction(emp.id, "markLeave")} disabled={acting === emp.id} className="h-7 px-2.5 rounded-lg bg-blue-500/10 text-blue-500 font-bold text-xs flex items-center gap-1.5 hover:bg-blue-500/20 disabled:opacity-50 transition-colors shadow-sm">
+                      <FileHeart className="w-3.5 h-3.5" /> ลา
+                    </button>
+                  </div>
+                ) : !hasClockedOut && todayRecord?.status !== "LEAVE" && todayRecord?.status !== "ABSENT" ? (
+                  <button onClick={() => clockAction(emp.id, "clockOut")} disabled={acting === emp.id} className="h-7 px-3 rounded-lg bg-orange-500/10 text-orange-500 font-bold text-xs flex items-center gap-1.5 hover:bg-orange-500/20 disabled:opacity-50 transition-colors shadow-sm">
+                    <LogOut className="w-3.5 h-3.5" /> ออกงาน
                   </button>
                 ) : (
-                  <span className="text-[10px] text-muted-foreground">{Number(todayRecord!.hoursWorked ?? 0).toFixed(1)}h</span>
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${statusColor[todayRecord?.status ?? "PRESENT"]}`}>
+                    {todayRecord?.status === "LEAVE" ? "ลางาน" : todayRecord?.status === "ABSENT" ? "ขาดงาน" : `${Number(todayRecord!.hoursWorked ?? 0).toFixed(1)} ชม.`}
+                  </span>
                 )}
               </div>
             )

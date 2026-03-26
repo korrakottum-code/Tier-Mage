@@ -21,24 +21,24 @@ export function PosClient({ menuItems, categories, paymentChannels, branches, ro
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] -mt-6 -mx-4 sm:-mx-6">
       {/* Top tabs */}
-      <div className="flex items-center gap-1 px-4 pt-4 pb-0 border-b border-border bg-background shrink-0">
+      <div className="flex items-center gap-3 px-6 pt-4 pb-4 border-b border-border/50 bg-background/80 backdrop-blur-xl shrink-0 z-10 shadow-sm relative">
         <button
           onClick={() => setTab("order")}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
-            tab === "order" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+            "flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300",
+            tab === "order" ? "bg-primary text-primary-foreground shadow-[0_4px_16px_rgba(217,119,6,0.3)] scale-105" : "text-muted-foreground bg-accent/30 hover:bg-accent/80 hover:text-foreground"
           )}
         >
-          <ShoppingCart className="w-4 h-4" /> ขายสินค้า
+          <ShoppingCart className="w-4.5 h-4.5" /> ขายสินค้า
         </button>
         <button
           onClick={() => setTab("history")}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
-            tab === "history" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+            "flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300",
+            tab === "history" ? "bg-primary text-primary-foreground shadow-[0_4px_16px_rgba(217,119,6,0.3)] scale-105" : "text-muted-foreground bg-accent/30 hover:bg-accent/80 hover:text-foreground"
           )}
         >
-          <History className="w-4 h-4" /> ประวัติวันนี้
+          <History className="w-4.5 h-4.5" /> ประวัติวันนี้
         </button>
       </div>
 
